@@ -328,42 +328,22 @@
       </div><!-- End Section Title -->
 
       <div class="container" data-aos="fade-up" data-aos-delay="100">
-
-        <form action="forms/appointment.php" method="post" role="form" class="php-email-form">
+        <form id="appointment-form" class="php-email-form" data-aos="fade-up" data-aos-delay="200">
           <div class="row">
-            <div class="col-md-4 form-group">
-              <input type="text" name="name" class="form-control" id="name" placeholder="Your Name" required="">
+            <div class="col-md-3 form-group">
+              <input type="text" name="name" class="form-control" placeholder="Your Name" required="">
             </div>
-            <div class="col-md-4 form-group mt-3 mt-md-0">
-              <input type="email" class="form-control" name="email" id="email" placeholder="Your Email" required="">
+            <div class="col-md-3 form-group mt-3 mt-md-0">
+              <input type="email" class="form-control" name="email" placeholder="Your Email" required="">
             </div>
-            <div class="col-md-4 form-group mt-3 mt-md-0">
-              <input type="tel" class="form-control" name="phone" id="phone" placeholder="Your Phone" required="">
+            <div class="col-md-3 form-group mt-3 mt-md-0">
+              <input type="tel" class="form-control" name="phone" placeholder="Your Phone" required="">
+            </div>
+            <div class="col-md-3 form-group mt-3 mt-md-0">
+              <input type="datetime-local" name="date" class="form-control datepicker" placeholder="Appointment Date"
+                required="">
             </div>
           </div>
-          <div class="row">
-            <div class="col-md-4 form-group mt-3">
-              <input type="datetime-local" name="date" class="form-control datepicker" id="date"
-                placeholder="Appointment Date" required="">
-            </div>
-            <div class="col-md-4 form-group mt-3">
-              <select name="department" id="department" class="form-select" required="">
-                <option value="">Select Department</option>
-                <option value="Department 1">Department 1</option>
-                <option value="Department 2">Department 2</option>
-                <option value="Department 3">Department 3</option>
-              </select>
-            </div>
-            <div class="col-md-4 form-group mt-3">
-              <select name="doctor" id="doctor" class="form-select" required="">
-                <option value="">Select Doctor</option>
-                <option value="Doctor 1">Doctor 1</option>
-                <option value="Doctor 2">Doctor 2</option>
-                <option value="Doctor 3">Doctor 3</option>
-              </select>
-            </div>
-          </div>
-
           <div class="form-group mt-3">
             <textarea class="form-control" name="message" rows="5" placeholder="Message (Optional)"></textarea>
           </div>
@@ -842,7 +822,6 @@
           </div>
 
           <div class="col-lg-8">
-            <!-- <form action="forms/contact.php" method="post" class="php-email-form" data-aos="fade-up" data-aos-delay="200"> -->
             <form id="contact-form" class="php-email-form" data-aos="fade-up" data-aos-delay="200">
               <div class="row gy-4">
 
@@ -965,9 +944,11 @@
   <!-- Main JS File -->
   <script src="assets/js/main.js"></script>
   <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
   <script>
     (function () {
-      emailjs.init("-9d2Qxm4NVs3J6Yoi"); // Replace with your EmailJS public key
+      emailjs.init("-9d2Qxm4NVs3J6Yoi");
     })();
   </script>
   <script>
@@ -987,13 +968,100 @@
         .then(function () {
           loading.style.display = 'none';
           sentMessage.style.display = 'block';
-          form.reset(); 
+          form.reset();
         }, function (error) {
           loading.style.display = 'none';
           errorMessage.style.display = 'block';
           errorMessage.innerText = 'Failed to send message. Please try again.';
           console.error('EmailJS Error:', error);
         });
+    });
+  </script>
+  <script>
+    document.getElementById('appointment-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const form = this;
+      const loading = form.querySelector('.loading');
+      const errorMessage = form.querySelector('.error-message');
+      const sentMessage = form.querySelector('.sent-message');
+
+      loading.style.display = 'block';
+      errorMessage.style.display = 'none';
+      sentMessage.style.display = 'none';
+
+      const name = form.name.value;
+      const email = form.email.value;
+      const phone = form.phone.value;
+      const message = form.message.value || 'No message provided';
+      const appointmentDate = new Date(form.date.value);
+
+      if (isNaN(appointmentDate.getTime())) {
+        loading.style.display = 'none';
+        errorMessage.style.display = 'block';
+        errorMessage.innerText = 'Invalid appointment date.';
+        return;
+      }
+
+      // Calculate end time (e.g., 1 hour later)
+      const endDate = new Date(appointmentDate.getTime() + 60 * 60 * 1000);
+
+      // Format for Google Calendar (UTC in YYYYMMDDTHHmmssZ)
+      function formatDate(date) {
+        return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+      }
+
+      const calendarLink = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
+        `&text=Appointment with ${name}` +
+        `&dates=${formatDate(appointmentDate)}/${formatDate(endDate)}` +
+        `&details=${encodeURIComponent(message + ' | Phone: ' + phone)}` +
+        `&location=Online`;
+
+      const templateParams = {
+        name: name,
+        email: email,
+        phone: phone,
+        message: message,
+        appointment_date: appointmentDate.toString(),
+        calendar_link: calendarLink
+      };
+
+      var data = {
+        service_id: 'service_oeyufel',
+        template_id: 'template_encg88p',
+        user_id: '-9d2Qxm4NVs3J6Yoi',
+        template_params: templateParams
+      }
+
+      /*
+      emailjs.send('service_oeyufel', 'template_encg88p', templateParams)
+        .then(function () {
+          loading.style.display = 'none';
+          sentMessage.style.display = 'block';
+          form.reset();
+        }, function (error) {
+          loading.style.display = 'none';
+          errorMessage.style.display = 'block';
+          errorMessage.innerText = 'Failed to send appointment email.';
+          console.error('EmailJS error:', error);
+        });
+      */
+
+      $.ajax('https://api.emailjs.com/api/v1.0/email/send', {
+        type: 'POST',
+        data: JSON.stringify(data),
+        contentType: 'application/json'
+      }).done(function () {
+        loading.style.display = 'none';
+        sentMessage.style.display = 'block';
+        form.reset();
+      }).fail(function (error) {
+        loading.style.display = 'none';
+        errorMessage.style.display = 'block';
+        errorMessage.innerText = 'Failed to send appointment email.';
+        console.error('EmailJS error:', error);
+      });
+
     });
   </script>
 
