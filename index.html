@@ -974,11 +974,25 @@
     document.getElementById('contact-form').addEventListener('submit', function (e) {
       e.preventDefault();
 
-      emailjs.sendForm('service_oeyufel', 'template_u788qkh', this)
+      const form = this;
+      const loading = form.querySelector('.loading');
+      const errorMessage = form.querySelector('.error-message');
+      const sentMessage = form.querySelector('.sent-message');
+
+      loading.style.display = 'block';
+      errorMessage.style.display = 'none';
+      sentMessage.style.display = 'none';
+
+      emailjs.sendForm('service_oeyufel', 'template_u788qkh', form)
         .then(function () {
-          alert('Message sent successfully!');
+          loading.style.display = 'none';
+          sentMessage.style.display = 'block';
+          form.reset(); 
         }, function (error) {
-          alert('Failed to send message. Error: ' + JSON.stringify(error));
+          loading.style.display = 'none';
+          errorMessage.style.display = 'block';
+          errorMessage.innerText = 'Failed to send message. Please try again.';
+          console.error('EmailJS Error:', error);
         });
     });
   </script>
